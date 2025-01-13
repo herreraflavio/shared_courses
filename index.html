@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shared Classes Tier List</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f4f4f4;
+      }
+      .tier-list {
+        text-align: center;
+        max-width: 90%;
+        height: 95%;
+      }
+      .tier {
+        margin: 10px 0;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+      }
+      .tier.collapsed {
+        max-height: 130px; /* Show only one row initially */
+      }
+      .tier.expanded {
+        max-height: 1000px; /* Expand to show all rows */
+        overflow: scroll;
+      }
+      .toggle-button {
+        cursor: pointer;
+        color: #007bff;
+        margin-top: 10px;
+        display: inline-block;
+      }
+      .user {
+        margin: 5px;
+        padding: 10px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        width: 220px;
+        flex: 0 0 auto;
+      }
+      .user img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        margin-bottom: 10px;
+      }
+      .shared-courses {
+        margin-top: 10px;
+        text-align: left;
+        font-size: 14px;
+        display: none; /* Initially hidden */
+      }
+      .tier.expanded .shared-courses {
+        display: block; /* Shown when tier is expanded */
+      }
+      .shared-courses ul {
+        padding-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tier-list" id="tierList"></div>
+
+    <script>
+      // Function to fetch and create the tier list from a local JSON file
+      async function createTierList() {
+        try {
+          const response = await fetch("aggregatedSharedUsers.json"); // Adjust the file path as needed
+          const data = await response.json();
+          const tierList = document.getElementById("tierList");
+
+          // Group users by shared_count
+          const groupedData = data.reduce((acc, user) => {
+            acc[user.shared_count] = acc[user.shared_count] || [];
+            acc[user.shared_count].push(user);
+            return acc;
+          }, {});
+
+          // Create tiers
+          Object.keys(groupedData)
+            .sort((a, b) => b - a)
+            .forEach((sharedCount) => {
+              const tierWrapper = document.createElement("div");
+              const tier = document.createElement("div");
+              const toggleButton = document.createElement("div");
+
+              tier.className = "tier collapsed"; // Start collapsed
+              toggleButton.className = "toggle-button";
+              toggleButton.textContent = "Expand";
+
+              groupedData[sharedCount].forEach((user) => {
+                const userDiv = document.createElement("div");
+                userDiv.className = "user";
+
+                // Generate shared course details
+                const sharedCoursesList = user.shared_courses
+                  .map(
+                    (course) =>
+                      `<li>${course.courseCode} : ${course.sectionName}</li>`
+                  )
+                  .join("");
+
+                userDiv.innerHTML = `
+                        <img src="${user.avatar_url}" alt="${user.user_name}">
+                        <div><strong>${user.user_name}</strong></div>
+                        <div>Shared Classes: ${sharedCount}</div>
+                        <div class="shared-courses">
+                          <strong>Shared Courses:</strong>
+                          <ul>
+                            ${sharedCoursesList}
+                          </ul>
+                        </div>
+                    `;
+
+                tier.appendChild(userDiv);
+              });
+
+              // Toggle button click event
+              toggleButton.addEventListener("click", () => {
+                if (tier.classList.contains("collapsed")) {
+                  tier.classList.remove("collapsed");
+                  tier.classList.add("expanded");
+                  toggleButton.textContent = "Collapse";
+                } else {
+                  tier.classList.remove("expanded");
+                  tier.classList.add("collapsed");
+                  toggleButton.textContent = "Expand";
+                }
+              });
+              tierWrapper.appendChild(toggleButton);
+              tierWrapper.appendChild(tier);
+
+              tierList.appendChild(tierWrapper);
+            });
+        } catch (error) {
+          console.error("Error fetching or parsing JSON:", error);
+        }
+      }
+
+      // Initialize the tier list
+      createTierList();
+    </script>
+  </body>
+</html>

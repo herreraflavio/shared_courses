@@ -1,0 +1,11 @@
+.vscode
+backups/
+node_modules/
+.env
+.DS_Store
+users/*
+!users/
+!users/.gitkeep
+aggregatedSharedUsers.json
+courses_list.csv
+self_user.json
